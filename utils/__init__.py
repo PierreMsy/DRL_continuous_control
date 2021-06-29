@@ -1,1 +1,2 @@
-from .Config import Config
+from .config import Config
+from .context import Context
