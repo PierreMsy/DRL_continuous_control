@@ -1,4 +1,5 @@
-from torch import nn, manual_seed
+import torch
+from torch import nn
 import torch.nn.functional as F
 
 #TODO : Docstring
@@ -8,7 +9,7 @@ import torch.nn.functional as F
 
 class Actor_network(nn.Module):
     """[summary]
-
+    TODO
     Args:
         nn ([type]): [description]
     """
@@ -16,7 +17,7 @@ class Actor_network(nn.Module):
     def __init__(self, context, config):
         super(Actor_network, self).__init__()
         
-        self.seed = manual_seed(config.seed)
+        self.seed = torch.manual_seed(config.seed)
 
         self.fc_from_state = nn.Linear(context.state_size, config.fc_hl[0])
         self.fc_hl_1 = nn.Linear(config.fc_hl[0], config.fc_hl[1])
