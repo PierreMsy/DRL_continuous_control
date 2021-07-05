@@ -27,6 +27,6 @@ class Actor_network(nn.Module):
 
         features = F.relu(self.fc_from_state(state))
         features = F.relu(self.fc_hl_1(features))
-        actions = F.tanh(features) 
+        actions = torch.tanh(self.fc_to_action(features)) 
 
         return actions 

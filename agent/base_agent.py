@@ -1,13 +1,18 @@
-class Base_agent:
+from abc import ABC, abstractmethod
+
+class Base_agent(ABC):
 
     def __init__(self) -> None:
         pass
 
-    def act():
+    @abstractmethod
+    def act(self, state):
         pass
     
-    def step():
+    @abstractmethod
+    def step(self, state, action, next_state, reward):
         pass
 
-    def learn():
+    @abstractmethod
+    def learn(self):
         pass

@@ -13,7 +13,7 @@ class Critic_network(nn.Module):
     """
 
     def __init__(self, context, config):
-        super(Critic_network).__init__()
+        super(Critic_network, self).__init__()
 
         self.seed = torch.manual_seed(config.seed)
 
