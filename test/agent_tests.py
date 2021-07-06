@@ -14,7 +14,6 @@ def test_that_when_acting_agent_must_return_an_action():
     env = UnityEnvironment(file_name=PATH_ENV)
 
     brain_name = env.brain_names[0]
-    #brain = env.brains[brain_name]
     env_info = env.reset(train_mode=True)[brain_name]
     state = env_info.vector_observations[0]
 

@@ -6,7 +6,6 @@ from ccontrol.model import Actor_network, Critic_network
 from ccontrol.utils import to_np
 
 #TODO : Docstring
-#TODO : Reorganize to have from models import critic_net, actor_net
 class DDPG_agent(Base_agent):
 
     """
@@ -19,6 +18,7 @@ class DDPG_agent(Base_agent):
     def __init__(self, context, config) -> None:
         
         self.config = config
+        self.buffer = ReplayBuffer(config.buffer_type)
 
         self.actor_network = Actor_network(context, config)
         self.actor_traget_network = Actor_network(context, config)
@@ -40,6 +40,10 @@ class DDPG_agent(Base_agent):
         return to_np(action)
 
     def step(self, state, action, next_state, reward, done):
+
+        #add to buffer
+
+        # if enough experiences learn
         pass
 
     def learn(self):
