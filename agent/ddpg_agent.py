@@ -3,7 +3,7 @@ from torch.nn.functional import relu
 
 from ccontrol.agent import Base_agent
 from ccontrol.model import Actor_network, Critic_network
-from ccontrol.utils import to_np
+from ccontrol.utils import to_np, BufferCreator
 
 #TODO : Docstring
 class DDPG_agent(Base_agent):
@@ -18,7 +18,7 @@ class DDPG_agent(Base_agent):
     def __init__(self, context, config) -> None:
         
         self.config = config
-        self.buffer = ReplayBuffer(config.buffer_type)
+        self.buffer = BufferCreator().create_buffer(config)
 
         self.actor_network = Actor_network(context, config)
         self.actor_traget_network = Actor_network(context, config)
@@ -42,9 +42,11 @@ class DDPG_agent(Base_agent):
     def step(self, state, action, next_state, reward, done):
 
         #add to buffer
+        self.buffer.add(state, action, next_state, reward, done)
 
         # if enough experiences learn
-        pass
+        if len(self.buffer) >= self.config.batch_size:
+            self.learn()
 
     def learn(self):
-        pass
+        raise NotImplementedError
