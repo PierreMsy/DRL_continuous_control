@@ -18,6 +18,7 @@ class Actor_network(nn.Module):
         super(Actor_network, self).__init__()
         
         self.seed = torch.manual_seed(config.seed)
+        self.optimizer = config.optimizer
 
         self.fc_from_state = nn.Linear(context.state_size, config.fc_hl[0])
         self.fc_hl_1 = nn.Linear(config.fc_hl[0], config.fc_hl[1])

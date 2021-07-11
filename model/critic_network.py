@@ -16,6 +16,8 @@ class Critic_network(nn.Module):
         super(Critic_network, self).__init__()
 
         self.seed = torch.manual_seed(config.seed)
+        self.optmizer = config.optimizer
+        self.criterion = config.criterion
 
         self.fc_from_state = nn.Linear(context.state_size, config.fc_hl[0])
         self.fc_state_action = nn.Linear(config.fc_hl[0] + context.action_size,
@@ -26,7 +28,7 @@ class Critic_network(nn.Module):
 
         state_features = F.relu(self.fc_from_state(state))
         state_features_actions =  torch.cat(state_features, action)
-        state_aciton_features = F.relu(self.fc_state_action(state_features_actions))
-        Q_hat = self.fc_to_Q(state_aciton_features)
+        state_action_features = F.relu(self.fc_state_action(state_features_actions))
+        Q_hat = self.fc_to_Q(state_action_features)
 
         return Q_hat        

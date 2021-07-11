@@ -49,4 +49,40 @@ class DDPG_agent(Base_agent):
             self.learn()
 
     def learn(self):
-        raise NotImplementedError
+        '''
+        Sample experiences from the replay buffer and updates the critic and the actor.
+
+        - The critic is updates based uppon a temporal difference error of the state-action value function
+          using the actor to compute the actionsfrom the next state.
+          error to minimize w.r.t w : r + γ * Q'_w'(s(t+1), µ'_θ'(s(t+1))) - Q_w(s(t),a(t))
+
+        - The actor is updated using direct approximates of the state-action values from the critic.
+          value to maximize w.r.t θ : Q_w(s(t), µ_θ(s(t+1)))  
+        '''
+
+        states, actions, rewards, next_states, dones = self.buffer.sample()
+        next_actions = self.actor_traget_network(next_states)
+
+        TD_target = rewards + self.config.gamma * self.critic_target_network(next_states, next_actions)
+        TD_error = self.critic_network(states, actions) - TD_target
+
+        self.critic_network.zero_grad()
+        self.critic_network.criterion(TD_error)
+        self.critic_network.step()
+
+        actions_pred = self.actor_network(states)
+        Q_t_hat = self.critic_network(states, actions_pred)
+
+        self.actor_network.zero_grad()
+        self.actor_network.criterion(-(Q_t_hat).mean()) # - because torch add a minus sign to compute the loss
+        self.actor_network.step()
+
+        self.soft_update(self.actor_network, self.actor_traget_network, self.config.tau)
+        self.soft_update(self.critic_network, self.critic_traget_network, self.config.tau)
+        
+def soft_update(netwok, target_network, tau):
+    '''
+    net_weights = (1-τ) * net_weights + τ * target_net_weights 
+    ''' 
+    target_network.data.copy_(
+        (1 - tau) * netwok.parameters().copy() + tau * target_network.parameters().copy())
