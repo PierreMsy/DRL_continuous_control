@@ -57,11 +57,11 @@ class DDPG_agent(Base_agent):
         - The actor is updated using direct approximates of the state-action values from the critic.
           value to maximize w.r.t θ : Q_w(s(t), µ_θ(s(t+1)))  
         '''
-
         states, actions, rewards, next_states, dones = self.buffer.sample()
         next_actions = self.actor_target_network(next_states)
 
-        TD_targets = rewards + self.config.gamma * self.critic_target_network(next_states, next_actions)
+        TD_targets = rewards + (self.config.gamma * 
+                                self.critic_target_network(next_states, next_actions) * (1 - dones))
         Q_values = self.critic_network(states, actions)
 
         self.critic_network.optimizer.zero_grad()

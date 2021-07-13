@@ -36,7 +36,7 @@ class ReplayBuffer:
 
     def _convert_to_torch(self, args):
         #TODO Utilize *kwargs / dict / getattr and config for types. np.asarray?
-        return (torch.from_numpy(np.array(arg)).float().to(self.config.device) for arg in args) 
+        return (torch.from_numpy(np.vstack(arg)).float().to(self.config.device) for arg in args) 
 
 class UniformReplayBuffer(ReplayBuffer):
 
