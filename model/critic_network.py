@@ -2,6 +2,7 @@ import torch
 from torch import  nn
 import torch.nn.functional as F
 
+from ccontrol.utils import OptimizerCreator
 
 class Critic_network(nn.Module):
     """
@@ -24,10 +25,13 @@ class Critic_network(nn.Module):
                                          config.fc_hl[1])
         self.fc_to_Q = nn.Linear(config.fc_hl[1], 1)
 
+        self.optimizer = OptimizerCreator().create(
+            config.optimizer, self.parameters(), config.optim_kwargs)
+
     def forward(self, state, action):
 
         state_features = F.relu(self.fc_from_state(state))
-        state_features_actions =  torch.cat(state_features, action)
+        state_features_actions =  torch.cat((state_features, action), dim=1)
         state_action_features = F.relu(self.fc_state_action(state_features_actions))
         Q_hat = self.fc_to_Q(state_action_features)
 

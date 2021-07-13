@@ -11,7 +11,7 @@ class BufferCreator:
             'uniform': lambda config: UniformReplayBuffer(config)
         }
     
-    def create_buffer(self, config):
+    def create(self, config):
         return self.builders[config.buffer_type](config)
 
 class ReplayBuffer:
@@ -34,7 +34,7 @@ class ReplayBuffer:
     def __len__(self):
         return len(self.memory)
 
-    def _convert_to_torch(self, *args):
+    def _convert_to_torch(self, args):
         #TODO Utilize *kwargs / dict / getattr and config for types. np.asarray?
         return (torch.from_numpy(np.array(arg)).float().to(self.config.device) for arg in args) 
 

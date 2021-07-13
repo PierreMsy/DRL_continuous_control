@@ -3,9 +3,9 @@ from torch.nn.functional import relu
 
 from ccontrol.agent import Base_agent
 from ccontrol.model import Actor_network, Critic_network
-from ccontrol.utils import to_np, BufferCreator
+from ccontrol.utils import to_np, BufferCreator, CriterionCreator
 
-#TODO : Docstring
+
 class DDPG_agent(Base_agent):
 
     """
@@ -18,15 +18,16 @@ class DDPG_agent(Base_agent):
     def __init__(self, context, config) -> None:
         
         self.config = config
-        self.buffer = BufferCreator().create_buffer(config)
+        self.buffer = BufferCreator().create(config)
 
         self.actor_network = Actor_network(context, config)
-        self.actor_traget_network = Actor_network(context, config)
-        self.actor_traget_network.load_state_dict(self.actor_network.state_dict())
+        self.actor_target_network = Actor_network(context, config)
+        self.actor_target_network.load_state_dict(self.actor_network.state_dict())
 
         self.critic_network = Critic_network(context, config)
         self.critic_target_network = Critic_network(context, config)
         self.critic_target_network.load_state_dict(self.critic_network.state_dict())
+        self.critic_criterion = CriterionCreator().create(config.critic_criterion)
 
     def act(self, state):
 
@@ -39,12 +40,9 @@ class DDPG_agent(Base_agent):
 
         return to_np(action)
 
-    def step(self, state, action, next_state, reward, done):
+    def step(self, state, action, reward, next_state, done):
 
-        #add to buffer
-        self.buffer.add(state, action, next_state, reward, done)
-
-        # if enough experiences learn
+        self.buffer.add(state, action, reward, next_state, done)
         if len(self.buffer) >= self.config.batch_size:
             self.learn()
 
@@ -61,28 +59,31 @@ class DDPG_agent(Base_agent):
         '''
 
         states, actions, rewards, next_states, dones = self.buffer.sample()
-        next_actions = self.actor_traget_network(next_states)
+        next_actions = self.actor_target_network(next_states)
 
-        TD_target = rewards + self.config.gamma * self.critic_target_network(next_states, next_actions)
-        TD_error = self.critic_network(states, actions) - TD_target
+        TD_targets = rewards + self.config.gamma * self.critic_target_network(next_states, next_actions)
+        Q_values = self.critic_network(states, actions)
 
-        self.critic_network.zero_grad()
-        self.critic_network.criterion(TD_error)
-        self.critic_network.step()
+        self.critic_network.optimizer.zero_grad()
+        loss = self.critic_criterion(TD_targets, Q_values)
+        loss.backward()
+        self.critic_network.optimizer.step()
 
         actions_pred = self.actor_network(states)
-        Q_t_hat = self.critic_network(states, actions_pred)
-
-        self.actor_network.zero_grad()
-        self.actor_network.criterion(-(Q_t_hat).mean()) # - because torch add a minus sign to compute the loss
-        self.actor_network.step()
-
-        self.soft_update(self.actor_network, self.actor_traget_network, self.config.tau)
-        self.soft_update(self.critic_network, self.critic_traget_network, self.config.tau)
+        Q_values = self.critic_network(states, actions_pred)
         
-def soft_update(netwok, target_network, tau):
+        loss = -(Q_values).mean()
+        self.actor_network.optimizer.zero_grad()
+        loss.backward()
+        self.actor_network.optimizer.step()
+
+        soft_update(self.actor_target_network, self.actor_network, self.config.tau)
+        soft_update(self.critic_target_network, self.critic_network, self.config.tau)
+        
+def soft_update(target_network, netwok, tau):
     '''
     net_weights = (1-τ) * net_weights + τ * target_net_weights 
     ''' 
-    target_network.data.copy_(
-        (1 - tau) * netwok.parameters().copy() + tau * target_network.parameters().copy())
+    for target_param, local_param in zip(target_network.parameters(), netwok.parameters()):
+        target_param.data.copy_(
+            (1.0 - tau) * target_param.data + tau * local_param.data)

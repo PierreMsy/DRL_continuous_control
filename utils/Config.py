@@ -8,18 +8,33 @@ class Config:
 
     def __init__(self,
                  seed=1,
+                 gamma= .99,
+                 tau=5e-3,
                  batch_size=32,
-                 buffer_size=500):
+                 buffer_size=500,
+                 criterion='MSE',
+                 optimizer='Adam',
+                 learning_rate=1e-2):
         
         self.seed = seed
-        self.fc_hl = [64, 64]
         self.device = 'cpu'
+
+        self.gamma = gamma #discount factor
+        self.tau = tau #target net soft update rate
+        
         self.batch_size = batch_size
         self.buffer_size = buffer_size
         self.buffer_type = 'uniform'
 
+        self.fc_hl = [64, 64]
         self.optimizer = 'Adam'
-        self.criterion = 'MSE'
+        self.critic_criterion = 'MSE'
+
+        self.criterion = criterion
+        self.optimizer = optimizer
+        self.optim_kwargs = {
+            'lr' : learning_rate
+        }
 
     def __str__(self):
         representation = f"""
