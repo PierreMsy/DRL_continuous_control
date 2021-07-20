@@ -3,6 +3,8 @@ import numpy as np
 import torch.optim as optim
 from torch import nn
 
+from ccontrol.utils import OUActionNoise
+
 def to_np(tensor) -> np.ndarray:
     return tensor.cpu().detach().numpy()
 
@@ -25,3 +27,13 @@ class CriterionCreator():
 
     def create(self, criterion):
         return self.builders[criterion]()
+
+class NoiseCreator():
+
+    def __init__(self):
+        self.builders = {
+            'OU': lambda size, kwargs : OUActionNoise(size, **kwargs)
+        }
+
+    def create(self, noise, size, kwargs):
+        return self.builders[noise](size, kwargs)

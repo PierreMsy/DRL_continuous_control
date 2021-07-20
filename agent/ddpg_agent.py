@@ -1,9 +1,9 @@
+import numpy as np
 import torch
-from torch.nn.functional import relu
 
 from ccontrol.agent import Base_agent
 from ccontrol.model import Actor_network, Critic_network
-from ccontrol.utils import to_np, BufferCreator, CriterionCreator
+from ccontrol.utils import to_np, BufferCreator, CriterionCreator, NoiseCreator
 
 
 class DDPG_agent(Base_agent):
@@ -17,19 +17,24 @@ class DDPG_agent(Base_agent):
 
     def __init__(self, context, config) -> None:
         
+        self.context = context
         self.config = config
         self.buffer = BufferCreator().create(config)
+        self.t_step = 0
 
-        self.actor_network = Actor_network(context, config)
-        self.actor_target_network = Actor_network(context, config)
+        self.noise = NoiseCreator().create(config.noise.method,
+            context.action_size, config.noise.kwargs)
+
+        self.actor_network = Actor_network(context, config.actor)
+        self.actor_target_network = Actor_network(context, config.actor)
         self.actor_target_network.load_state_dict(self.actor_network.state_dict())
 
-        self.critic_network = Critic_network(context, config)
-        self.critic_target_network = Critic_network(context, config)
+        self.critic_network = Critic_network(context, config.critic)
+        self.critic_target_network = Critic_network(context, config.critic)
         self.critic_target_network.load_state_dict(self.critic_network.state_dict())
-        self.critic_criterion = CriterionCreator().create(config.critic_criterion)
+        self.critic_criterion = CriterionCreator().create(config.critic.criterion)
 
-    def act(self, state):
+    def act(self, state, noise=False):
 
         state = torch.from_numpy(state).float().to(self.config.device)
 
@@ -37,13 +42,20 @@ class DDPG_agent(Base_agent):
         with torch.no_grad():
             action = self.actor_network.forward(state)
         self.actor_network.train()
+        action = to_np(action)
+        
+        if noise:
+            action = np.clip(action + self.noise.sample(),
+                self.context.action_min, self.context.action_max)
 
-        return to_np(action)
+        return action
 
     def step(self, state, action, reward, next_state, done):
-
+        
+        self.t_step +=1
         self.buffer.add(state, action, reward, next_state, done)
-        if len(self.buffer) >= self.config.batch_size:
+
+        if (len(self.buffer) >= self.config.batch_size) & (self.t_step % self.config.update_every == 0):
             self.learn()
 
     def learn(self):
@@ -63,9 +75,9 @@ class DDPG_agent(Base_agent):
         TD_targets = rewards + (self.config.gamma * 
                                 self.critic_target_network(next_states, next_actions) * (1 - dones))
         Q_values = self.critic_network(states, actions)
+        loss = self.critic_criterion(TD_targets, Q_values)
 
         self.critic_network.optimizer.zero_grad()
-        loss = self.critic_criterion(TD_targets, Q_values)
         loss.backward()
         self.critic_network.optimizer.step()
 
@@ -87,3 +99,4 @@ def soft_update(target_network, netwok, tau):
     for target_param, local_param in zip(target_network.parameters(), netwok.parameters()):
         target_param.data.copy_(
             (1.0 - tau) * target_param.data + tau * local_param.data)
+    

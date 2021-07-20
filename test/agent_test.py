@@ -4,7 +4,7 @@ import numpy as np
 from unityagents import UnityEnvironment
 
 from ccontrol.agent import DDPG_agent
-from ccontrol.utils import Config, Context, to_np
+from ccontrol.utils import Configuration, Context, to_np
 
 from ccontrol.test.mock import env
 
@@ -16,7 +16,7 @@ PATH_ENV = ('C:/Users/pierr/Desktop/DataScience/Formation/2020_Udacity_DeepRL/'+
 def test_that_when_acting_agent_must_return_an_action():
     
     ctx = Context(env(33, 4))
-    agent = DDPG_agent(ctx, Config())
+    agent = DDPG_agent(ctx, Configuration())
 
     state = np.array([.5] *33)
 
@@ -33,7 +33,7 @@ def test_that_when_agent_step_an_experience_is_added_to_the_buffer():
         env_info = env.reset(train_mode=True)[brain_name]
     
         ctx = Context(brain)
-        agent = DDPG_agent(ctx, Config())
+        agent = DDPG_agent(ctx, Configuration())
     
         state = env_info.vector_observations[0]
     
@@ -58,7 +58,7 @@ def test_that_when_agent_learn_it_updates_its_net_weights():
         env_info = env.reset(train_mode=True)[brain_name]
     
         # 3 steps needed to learn
-        cfg = Config(batch_size=3)
+        cfg = Configuration(batch_size=3)
         agent = DDPG_agent(Context(brain), cfg)
         state = env_info.vector_observations[0]
         initial_critic_weights = _extract_last_layer(agent.critic_network)

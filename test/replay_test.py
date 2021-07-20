@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 
-from ccontrol.utils import Config
+from ccontrol.utils import Configuration
 from ccontrol.utils.replay_buffer import UniformReplayBuffer
 
 
@@ -11,7 +11,7 @@ def test_that_tensor_sampled_from_uniform_buffer_have_correct_size():
     action_size = 4
     nb_experiences = 3
 
-    buffer = UniformReplayBuffer(Config())
+    buffer = UniformReplayBuffer(Configuration())
 
     for _ in range(nb_experiences):
         state = np.random.random(state_size)
