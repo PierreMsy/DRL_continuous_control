@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 
-from ccontrol.utils import Configuration
+from ccontrol.config import Configuration
 from ccontrol.utils.replay_buffer import UniformReplayBuffer
 
 

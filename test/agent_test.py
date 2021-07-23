@@ -4,7 +4,8 @@ import numpy as np
 from unityagents import UnityEnvironment
 
 from ccontrol.agent import DDPG_agent
-from ccontrol.utils import Configuration, Context, to_np
+from ccontrol.utils import Context, to_np
+from ccontrol.config import Configuration
 
 from ccontrol.test.mock import env
 

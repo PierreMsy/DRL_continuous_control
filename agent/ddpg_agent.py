@@ -2,7 +2,7 @@ import numpy as np
 import torch
 
 from ccontrol.agent import Base_agent
-from ccontrol.model import Actor_network, Critic_network
+from ccontrol.model import Actor_network_creator, Critic_network_creator
 from ccontrol.utils import to_np, BufferCreator, CriterionCreator, NoiseCreator
 
 
@@ -25,12 +25,12 @@ class DDPG_agent(Base_agent):
         self.noise = NoiseCreator().create(config.noise.method,
             context.action_size, config.noise.kwargs)
 
-        self.actor_network = Actor_network(context, config.actor)
-        self.actor_target_network = Actor_network(context, config.actor)
+        self.actor_network = Actor_network_creator().create(context, config.actor)
+        self.actor_target_network = Actor_network_creator().create(context, config.actor)
         self.actor_target_network.load_state_dict(self.actor_network.state_dict())
 
-        self.critic_network = Critic_network(context, config.critic)
-        self.critic_target_network = Critic_network(context, config.critic)
+        self.critic_network = Critic_network_creator().create(context, config.critic)
+        self.critic_target_network = Critic_network_creator().create(context, config.critic)
         self.critic_target_network.load_state_dict(self.critic_network.state_dict())
         self.critic_criterion = CriterionCreator().create(config.critic.criterion)
 

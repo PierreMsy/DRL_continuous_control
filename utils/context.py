@@ -1,17 +1,21 @@
 from unityagents import UnityEnvironment
+from unityagents.brain import BrainParameters
 import gym
 
 class Context:
 
-    def __init__(self, env) -> None:
+    def __init__(self, env, kwargs={}) -> None:
 
         if isinstance(env, UnityEnvironment):
 
+            raise Exception('UnityEnvironment not supported yet')
+
+        elif isinstance(env, BrainParameters):
+
             self.state_size = env.vector_observation_space_size
             self.action_size = env.vector_action_space_size
-            self.action_min = None
-            self.action_max = None
-            raise Exception('Implement it plz')
+            self.action_min = kwargs.get("action_min")
+            self.action_max = kwargs.get("action_max")
 
         elif isinstance(env, gym.wrappers.time_limit.TimeLimit):
 
