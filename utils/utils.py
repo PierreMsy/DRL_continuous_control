@@ -35,13 +35,11 @@ class CriterionCreator():
     def create(self, criterion):
         return self.builders[criterion]()
 
-def load_scores(path=r'./output/score',
-                day=None, month=None, year=None,
-                key=None, display=False):
-    
+def _get_files(path, key, day, month, year):
+
     files = [
-        f for f in os.listdir(path) 
-            if re.match(r'\d\d_\d\d_\d\d_.*', f)]
+    f for f in os.listdir(path) 
+        if re.match(r'\d\d_\d\d_\d\d_.*', f)]
     
     if year: 
         files = [f for f in files if f[0:2]==year]
@@ -50,7 +48,16 @@ def load_scores(path=r'./output/score',
     if day: 
         files = [f for f in files if f[6:8]==day]
     if key: 
-        files = [f for f in files if f[15:]==key]
+        files = [f for f in files if f[15:15+len(key)]==key]
+    
+    return files
+
+def load_scores(path=None, day=None, month=None, year=None,
+                key=None, display=False):
+    
+    if path is None:
+        path = os.path.join(os.path.dirname(__file__), r'./../../output/score')
+    files = _get_files(path, key, day, month, year)
     
     if display:
         print(files)
@@ -60,10 +67,35 @@ def load_scores(path=r'./output/score',
         res[f[15:]] = pd.read_csv(os.path.join(path, f))
     return res
 
+def load_agent(key, agent, path=None, day=None, month=None, year=None):
+
+    if path is None:
+        path = os.path.join(os.path.dirname(__file__), r'./../../output/model')
+    files = _get_files(path, key, day, month, year)
+
+    if len(files) > 2:
+        raise Exception('Please add temporal information, too much models matched the given key:\n'+
+        f'Found files :{files}\nInput key : {key}, day : {day}, month : {month}, year : {year}.')
+
+    actor_model = [f for f in files if 'actor' in f][0]
+    actor_checkpoint = torch.load(os.path.join(path,actor_model))
+
+    agent.actor_network.load_state_dict(actor_checkpoint)
+    agent.actor_target_network.load_state_dict(actor_checkpoint)
+
+    critic_model = [f for f in files if 'critic' in f][0]
+    critic_checkpoint = torch.load(os.path.join(path, critic_model))
+
+    agent.critic_network.load_state_dict(critic_checkpoint)
+    agent.critic_target_network.load_state_dict(critic_checkpoint)
+
+    return agent
+
 def plot_scores(dic_scores, window_size=20, target_score=None):
     
-    fig, axe = plt.subplots(1,1,figsize=(14,7))
+    fig, axe = plt.subplots(1,1,figsize=(13,7), dpi=200)
 
+    max_len = 0
     for key, result in dic_scores.items():
         score = np.array(result.score)
         score_averaged = []
@@ -71,13 +103,14 @@ def plot_scores(dic_scores, window_size=20, target_score=None):
             score_averaged.append(
                 np.mean(
                     score[max(0, i-window_size//2): min(len(score)-1, i+window_size//2)]))
-        
+        max_len = max(max_len, len(score_averaged))
         axe.plot(score_averaged, label=key)
-        if target_score:
-            axe.hlines(13, 0, len(score_averaged), 'k', linestyle=':')
-        axe.set_ylabel('Score')
-        axe.set_xlabel('Episode #')
 
+    if target_score:
+        axe.hlines(target_score, 0, max_len, 'k', linestyle=':', label='target score')
+
+    axe.set_ylabel('Score')
+    axe.set_xlabel('Episode #')
     fig.legend(bbox_to_anchor=(1, .85), loc='upper left')
 
 def create_time_suffix():
