@@ -152,6 +152,5 @@ class Noise_configuration:
         }
 
     def __str__(self):
-        return f"""This is the noise :
-method : {self.method}"""
+        return f"""method : {self.method}"""
         
