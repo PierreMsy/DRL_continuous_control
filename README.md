@@ -10,6 +10,8 @@ The simulation can contain up to 20 agents that share the same behavior paramete
 
 They observe 33-dimensional **state space** corresponding to position, rotation, velocity, and angular velocities of the two arms.
 
+The task is episodic, and in order to solve the environment, the agent must get an average score of +30 over 100 consecutive episodes.
+
 ## Getting Started
 
 https://github.com/Unity-Technologies/ml-agents
